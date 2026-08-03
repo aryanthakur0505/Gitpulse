@@ -1,0 +1,143 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum RepositoryStatus {
+  PENDING
+  CLONING
+  PROCESSING
+  EMBEDDING
+  READY
+  FAILED
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  githubId  String   @unique
+  email     String?  @unique
+  name      String?
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  repositories  Repository[]
+  conversations Conversation[]
+
+  @@map("users")
+}
+
+model Repository {
+  id          String           @id @default(cuid())
+  userId      String
+  githubId    Int              @unique
+  name        String
+  fullName    String           @unique
+  description   String?          @db.Text
+  url           String           @db.VarChar(500)
+  cloneUrl      String           @db.VarChar(500)
+  language      String?
+  stars         Int              @default(0)
+  forks         Int              @default(0)
+  isPrivate     Boolean          @default(false)
+  defaultBranch String           @default("main")
+  status        RepositoryStatus @default(PENDING)
+  errorMessage  String?          @db.Text
+  indexedAt     DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  files         RepositoryFile[]
+  conversations Conversation[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("repositories")
+}
+
+model RepositoryFile {
+  id           String   @id @default(cuid())
+  repositoryId String
+  path         String           @db.VarChar(500)
+  language     String?
+  size         Int      @default(0)
+  lineCount    Int?
+  checksum     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  repository Repository  @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  chunks     CodeChunk[]
+
+  @@unique([repositoryId, path])
+  @@index([repositoryId])
+  @@map("repository_files")
+}
+
+model CodeChunk {
+  id          String   @id @default(cuid())
+  fileId      String
+  content     String   @db.Text
+  startLine   Int
+  endLine     Int
+  tokenCount  Int?
+  embeddingId String?  @db.VarChar(500) // Pinecone vector ID
+  metadata    Json?    // Extra metadata for RAG context
+  createdAt   DateTime @default(now())
+
+  file RepositoryFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([fileId])
+  @@index([embeddingId])
+  @@map("code_chunks")
+}
+
+model Conversation {
+  id           String   @id @default(cuid())
+  userId       String
+  repositoryId String
+  title        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  messages   Message[]
+
+  @@index([userId])
+  @@index([repositoryId])
+  @@map("conversations")
+}
+
+model Message {
+  id             String      @id @default(cuid())
+  conversationId String
+  role           MessageRole
+  content        String       @db.Text
+  metadata       Json?        // token counts, model used, sources, etc.
+  createdAt      DateTime    @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@map("messages")
+}

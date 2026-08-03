@@ -1,0 +1,50 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "env": [
+        "NODE_ENV",
+        "DATABASE_URL",
+        "REDIS_URL",
+        "JWT_SECRET",
+        "NEXTAUTH_SECRET",
+        "NEXTAUTH_URL",
+        "GITHUB_CLIENT_ID",
+        "GITHUB_CLIENT_SECRET",
+        "API_URL",
+        "API_INTERNAL_SECRET",
+        "PORT"
+      ]
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+    },
+    "lint": {
+      "outputs": []
+    },
+    "type-check": {
+      "outputs": []
+    },
+    "generate": {
+      "cache": false,
+      "outputs": ["generated/**"]
+    },
+    "migrate": {
+      "cache": false
+    },
+    "push": {
+      "cache": false
+    },
+    "studio": {
+      "cache": false,
+      "persistent": true
+    },
+    "reset": {
+      "cache": false
+    }
+  }
+}

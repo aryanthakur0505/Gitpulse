@@ -1,0 +1,27 @@
+{
+  "name": "gitpulse",
+  "version": "0.0.1",
+  "private": true,
+  "packageManager": "pnpm@9.4.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "db:generate": "pnpm --filter @gitpulse/db generate",
+    "db:migrate": "pnpm --filter @gitpulse/db migrate",
+    "db:push": "pnpm --filter @gitpulse/db push",
+    "db:studio": "pnpm --filter @gitpulse/db studio",
+    "db:reset": "pnpm --filter @gitpulse/db reset",
+    "docker:up": "docker compose -f docker/docker-compose.yml up -d",
+    "docker:down": "docker compose -f docker/docker-compose.yml down"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.14",
+    "typescript": "^5.5.3"
+  }
+}
