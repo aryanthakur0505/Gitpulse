@@ -29,6 +29,9 @@ const envSchema = z.object({
   LOG_LEVEL: z
     .enum(["debug", "info", "warn", "error"])
     .default("info"),
+
+  // GitHub API
+  GITHUB_TOKEN: z.string().optional(),
 });
 
 type Env = z.infer<typeof envSchema>;
