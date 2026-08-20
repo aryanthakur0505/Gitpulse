@@ -90,7 +90,7 @@ export function Sidebar() {
       {/* Footer */}
       <div className="border-t border-sidebar-border px-4 py-3">
         <p className="text-[10px] text-muted-foreground/60">
-          GitPulse v0.1.0 — Phase 0
+          GitPulse v0.8.0 — Phase 8
         </p>
       </div>
     </aside>

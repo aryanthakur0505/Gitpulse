@@ -5,6 +5,14 @@ import { logger, setupProcessLogging } from "./lib/logger";
 import { getRedisClient, closeRedis } from "./config/redis";
 import { getQueue, closeAllQueues, QUEUES } from "./lib/queue";
 import { db } from "@gitpulse/db";
+import {
+  startRepositoryProcessorWorker,
+  stopRepositoryProcessorWorker,
+} from "./workers/repositoryProcessor";
+import {
+  startEmbeddingWorker,
+  stopEmbeddingWorker,
+} from "./workers/embeddingWorker";
 
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 
@@ -29,7 +37,12 @@ async function bootstrap(): Promise<void> {
   getQueue(QUEUES.EMBEDDING);
   logger.info("BullMQ queues initialized");
 
-  // 4. Start HTTP server
+  // 4. Start background workers
+  startRepositoryProcessorWorker();
+  startEmbeddingWorker();
+  logger.info("Background workers started");
+
+  // 5. Start HTTP server
   const app = createApp();
   const server = app.listen(env.PORT, () => {
     logger.info(`🚀 API server running on http://localhost:${env.PORT}`, {
@@ -45,6 +58,8 @@ async function bootstrap(): Promise<void> {
     server.close(async () => {
       try {
         await Promise.all([
+          stopRepositoryProcessorWorker(),
+          stopEmbeddingWorker(),
           db.$disconnect(),
           closeRedis(),
           closeAllQueues(),
@@ -69,6 +84,7 @@ async function bootstrap(): Promise<void> {
 }
 
 bootstrap().catch((err) => {
+  console.error("RAW BOOTSTRAP ERROR:", err);
   logger.error("Bootstrap failed", { error: err });
   process.exit(1);
 });

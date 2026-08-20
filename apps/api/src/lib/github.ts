@@ -50,7 +50,7 @@ export function parseGitHubUrl(url: string): { owner: string; repo: string } {
     /^https?:\/\/github\.com\/([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)\/?$/
   );
   if (httpsMatch) {
-    return { owner: httpsMatch[1], repo: httpsMatch[2] };
+    return { owner: httpsMatch[1]!, repo: httpsMatch[2]! };
   }
 
   // Match git@github.com:owner/repo
@@ -58,7 +58,7 @@ export function parseGitHubUrl(url: string): { owner: string; repo: string } {
     /^git@github\.com:([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+)$/
   );
   if (sshMatch) {
-    return { owner: sshMatch[1], repo: sshMatch[2] };
+    return { owner: sshMatch[1]!, repo: sshMatch[2]! };
   }
 
   throw new AppError(400, "Invalid GitHub repository URL");
@@ -87,11 +87,18 @@ export async function fetchRepoMetadata(
           `Repository "${owner}/${repo}" not found or is private`
         );
       }
-      if (err.response?.status === 403) {
+      if (err.response?.status === 403 || err.response?.status === 429) {
+        const ghMessage = (err.response?.data as { message?: string })?.message ?? "";
+        if (ghMessage.toLowerCase().includes("bad credential")) {
+          throw new AppError(403, "GitHub token is invalid. Check your GITHUB_TOKEN in apps/api/.env.local.");
+        }
         throw new AppError(
           403,
-          "GitHub API rate limit exceeded. Add a GITHUB_TOKEN to your .env to increase limits."
+          "GitHub API rate limit exceeded. Add a GITHUB_TOKEN to apps/api/.env.local to increase limits."
         );
+      }
+      if (err.response?.status === 401) {
+        throw new AppError(401, "GitHub token is invalid or expired. Check GITHUB_TOKEN in apps/api/.env.local.");
       }
     }
     throw new AppError(502, "Failed to fetch repository data from GitHub");

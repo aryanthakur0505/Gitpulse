@@ -4,6 +4,8 @@ import { db } from "@gitpulse/db";
 import { requireAuth } from "../middleware/auth";
 import { notFound, badRequest } from "../middleware/errorHandler";
 import { parseGitHubUrl, fetchRepoMetadata } from "../lib/github";
+import { getQueue, QUEUES } from "../lib/queue";
+import { deleteNamespace } from "../lib/pinecone";
 
 const router = Router();
 
@@ -64,6 +66,13 @@ router.post(
         },
       });
 
+      // 5. Enqueue the repository processing job
+      await getQueue(QUEUES.REPOSITORY_PROCESSING).add(
+        "process",
+        { repositoryId: repository.id },
+        { jobId: `repo-${repository.id}` } // idempotent: won't duplicate if already queued
+      );
+
       res.status(201).json({ success: true, repository });
     } catch (err) {
       next(err);
@@ -95,6 +104,7 @@ router.get(
           forks: true,
           isPrivate: true,
           status: true,
+          errorMessage: true,
           indexedAt: true,
           createdAt: true,
           updatedAt: true,
@@ -110,7 +120,7 @@ router.get(
 
 /**
  * GET /api/repositories/:id
- * Get a single repository by ID (must belong to the authenticated user).
+ * Get a single repository by ID with file and chunk counts.
  */
 router.get(
   "/:id",
@@ -130,7 +140,61 @@ router.get(
         return next(notFound("Repository not found"));
       }
 
-      res.json({ success: true, repository });
+      // Get chunk count separately
+      const chunkCount = await db.codeChunk.count({
+        where: { file: { repositoryId: id } },
+      });
+
+      res.json({ success: true, repository: { ...repository, chunkCount } });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * POST /api/repositories/:id/reindex
+ * Wipes existing chunks/embeddings and re-queues the full processing pipeline.
+ */
+router.post(
+  "/:id/reindex",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user!.sub;
+
+      const repository = await db.repository.findFirst({
+        where: { id, userId },
+        select: { id: true, fullName: true, status: true },
+      });
+
+      if (!repository) return next(notFound("Repository not found"));
+
+      const inProgress = ["PENDING", "CLONING", "PROCESSING", "EMBEDDING"];
+      if (inProgress.includes(repository.status)) {
+        return next(badRequest("Repository is already being processed"));
+      }
+
+      // Reset status → PENDING and clear error
+      await db.repository.update({
+        where: { id },
+        data: { status: "PENDING", errorMessage: null, indexedAt: null },
+      });
+
+      // Delete existing chunks (cascade from files)
+      await db.repositoryFile.deleteMany({ where: { repositoryId: id } });
+
+      // Clear Pinecone namespace
+      await deleteNamespace(id);
+
+      // Re-enqueue
+      await getQueue(QUEUES.REPOSITORY_PROCESSING).add(
+        "process",
+        { repositoryId: id },
+        { jobId: `repo-${id}-reindex-${Date.now()}` }
+      );
+
+      res.json({ success: true, message: "Re-indexing started" });
     } catch (err) {
       next(err);
     }
@@ -157,6 +221,12 @@ router.delete(
       }
 
       await db.repository.delete({ where: { id } });
+
+      // Clean up Pinecone vectors for this repository.
+      // Non-blocking: we await it but any Pinecone error is swallowed
+      // (logged as a warning inside deleteNamespace) so the HTTP response
+      // always succeeds even if the vector store is temporarily unavailable.
+      await deleteNamespace(repository.id);
 
       res.json({ success: true, message: "Repository deleted successfully" });
     } catch (err) {

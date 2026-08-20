@@ -7,7 +7,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ImportRepoModal } from "@/components/repositories/ImportRepoModal";
 import { RepositoryCard } from "@/components/repositories/RepositoryCard";
 import { useRepositories, type RepositoryStatus } from "@/hooks/useRepositories";
-
 const STATUS_FILTERS: { label: string; value: RepositoryStatus | "ALL" }[] = [
   { label: "All", value: "ALL" },
   { label: "Ready", value: "READY" },

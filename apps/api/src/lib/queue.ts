@@ -4,7 +4,7 @@ import { logger } from "./logger";
 
 // ─── Queue Names ──────────────────────────────────────────────────────────────
 export const QUEUES = {
-  REPOSITORY_PROCESSING: "repository:processing",
+  REPOSITORY_PROCESSING: "repository-processing",
   EMBEDDING: "embedding",
 } as const;
 

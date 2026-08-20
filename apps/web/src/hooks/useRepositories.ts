@@ -24,9 +24,13 @@ export interface Repository {
   forks: number;
   isPrivate: boolean;
   status: RepositoryStatus;
+  errorMessage: string | null;
   indexedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  // Included in GET /:id responses
+  chunkCount?: number;
+  _count?: { files: number; conversations: number };
 }
 
 interface RepositoriesResponse {
@@ -99,3 +103,54 @@ export function useDeleteRepository() {
     },
   });
 }
+
+/**
+ * Mutation to re-index a repository (wipe + re-process from scratch).
+ */
+export function useReindexRepository() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await api.post(`/repositories/${id}/reindex`);
+    },
+    onSuccess: (_data, id) => {
+      // Invalidate both list and this repo's detail so status resets to PENDING
+      queryClient.invalidateQueries({ queryKey: repositoryKeys.list() });
+      queryClient.invalidateQueries({ queryKey: repositoryKeys.detail(id) });
+    },
+  });
+}
+
+// ─── Active Processing States ─────────────────────────────────────────────────
+
+const IN_PROGRESS_STATUSES: RepositoryStatus[] = [
+  "PENDING",
+  "CLONING",
+  "PROCESSING",
+  "EMBEDDING",
+];
+
+/**
+ * Fetches a single repository by ID.
+ * Auto-polls every 3 seconds while the repo is in an in-progress state.
+ * Polling stops automatically when the status becomes READY or FAILED.
+ */
+export function useRepository(id: string) {
+  return useQuery({
+    queryKey: repositoryKeys.detail(id),
+    queryFn: async () => {
+      const { data } = await api.get<{ success: boolean; repository: Repository }>(
+        `/repositories/${id}`
+      );
+      return data.repository;
+    },
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      if (!status) return 3_000;
+      return IN_PROGRESS_STATUSES.includes(status) ? 3_000 : false;
+    },
+    enabled: !!id,
+  });
+}
+

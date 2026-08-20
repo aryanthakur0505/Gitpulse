@@ -1,4 +1,10 @@
 import { z } from "zod";
+import dotenv from "dotenv";
+import path from "path";
+
+// Load from apps/api/.env.local first, then fall back to monorepo root .env
+dotenv.config({ path: path.resolve(__dirname, "../../.env.local") });
+dotenv.config({ path: path.resolve(__dirname, "../../../../.env") });
 
 const envSchema = z.object({
   // Server
@@ -32,6 +38,25 @@ const envSchema = z.object({
 
   // GitHub API
   GITHUB_TOKEN: z.string().optional(),
+
+  // Repository Processing
+  REPOS_TEMP_DIR: z.string().optional(), // defaults to os.tmpdir()/gitpulse
+
+  // AI — Phase 3+
+  // OPENAI_API_KEY is removed in favor of local free embeddings
+
+  // LLM — Phase 4+ (Gemini)
+  GEMINI_API_KEY: z.string().min(1, "GEMINI_API_KEY is required for chat responses"),
+
+  // Vector Database — Phase 3+
+  PINECONE_API_KEY: z.string().min(1, "PINECONE_API_KEY is required for vector storage"),
+  PINECONE_INDEX: z.string().default("gitpulse"),
+
+  // Embedding tuning
+  EMBEDDING_BATCH_SIZE: z
+    .string()
+    .default("100")
+    .transform((val) => parseInt(val, 10)),
 });
 
 type Env = z.infer<typeof envSchema>;
