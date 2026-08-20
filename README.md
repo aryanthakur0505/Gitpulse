@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
 
 <img src="docs/images/dashboard.png" alt="GitPulse Dashboard" width="100%" />
 
@@ -20,6 +20,15 @@
 </div>
 
 ---
+
+## 🎬 Demo
+
+https://github.com/aryanthakur0505/Gitpulse/raw/main/docs/demo.webp
+
+> *Full walkthrough: Dashboard → Repository import → AI chat with source citations → Conversations → Settings*
+
+---
+
 
 ## ✨ Features
 
