@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: gitpulse-api
+    env: node
+    buildCommand: pnpm install && pnpm build
+    startCommand: pnpm --filter @gitpulse/api start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: API_INTERNAL_SECRET
+        generateValue: true
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: PINECONE_API_KEY
+        sync: false
+      - key: PINECONE_INDEX
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
