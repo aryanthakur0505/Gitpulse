@@ -2,26 +2,29 @@ services:
   - type: web
     name: gitpulse-api
     env: node
-    buildCommand: pnpm install && pnpm build
-    startCommand: pnpm --filter @gitpulse/api start
+    region: oregon
+    plan: free
+    buildCommand: npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @gitpulse/db generate && pnpm --filter @gitpulse/api build
+    startCommand: node apps/api/dist/index.js
     envVars:
       - key: NODE_ENV
         value: production
+      - key: JWT_SECRET
+        value: H+2vn2RArs0Ik6eeE4aYSZwfMsTke8BeFkkZYWcSGqo=
+      - key: API_INTERNAL_SECRET
+        value: W4hF9dBCDFEnrAB7WNCDBvdTNMK177StTprSEByRpE0=
+      - key: PINECONE_INDEX
+        value: gitpulse
+      # YOU FILL THESE IN on the Render dashboard:
       - key: DATABASE_URL
         sync: false
       - key: REDIS_URL
-        sync: false
-      - key: JWT_SECRET
-        generateValue: true
-      - key: API_INTERNAL_SECRET
-        generateValue: true
-      - key: ALLOWED_ORIGINS
         sync: false
       - key: GEMINI_API_KEY
         sync: false
       - key: PINECONE_API_KEY
         sync: false
-      - key: PINECONE_INDEX
-        sync: false
       - key: GITHUB_TOKEN
+        sync: false
+      - key: ALLOWED_ORIGINS
         sync: false
