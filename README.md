@@ -72,7 +72,7 @@ https://github.com/aryanthakur0505/Gitpulse/raw/main/docs/demo.webp
 User Question
      │
      ▼
-Next.js (Web)  ──REST/SSE──▶  Express API (:4000)
+Next.js (Web)  ──REST/SSE──▶  Express API (Render)
                                       │
                     ┌─────────────────┼─────────────────┐
                     ▼                 ▼                  ▼
