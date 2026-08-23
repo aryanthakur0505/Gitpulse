@@ -5,7 +5,7 @@ import repositoriesRouter from "./repositories";
 import conversationsRouter from "./conversations";
 import statsRouter from "./stats";
 
-const router = Router();
+const router: Router = Router();
 
 router.use("/health", healthRouter);
 router.use("/auth", authRouter);

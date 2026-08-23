@@ -4,7 +4,7 @@ import { db } from "@gitpulse/db";
 import { requireInternalSecret, requireAuth, signToken } from "../middleware/auth";
 import { badRequest } from "../middleware/errorHandler";
 
-const router = Router();
+const router: Router = Router();
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 

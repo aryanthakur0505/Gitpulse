@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "@gitpulse/db";
 
-const router = Router();
+const router: Router = Router();
 
 /**
  * GET /health

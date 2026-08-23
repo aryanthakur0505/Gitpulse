@@ -7,7 +7,7 @@ import { runRagPipeline } from "../services/ragService";
 import type { ChatMessage } from "../lib/llm";
 import { logger } from "../lib/logger";
 
-const router = Router();
+const router: Router = Router();
 
 // All routes require a valid JWT
 router.use(requireAuth);

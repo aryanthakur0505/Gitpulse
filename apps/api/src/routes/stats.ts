@@ -3,7 +3,7 @@ import { db } from "@gitpulse/db";
 import { requireAuth } from "../middleware/auth";
 import { logger } from "../lib/logger";
 
-const router = Router();
+const router: Router = Router();
 
 router.use(requireAuth);
 

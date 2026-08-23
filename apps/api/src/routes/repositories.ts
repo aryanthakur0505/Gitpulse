@@ -7,7 +7,7 @@ import { parseGitHubUrl, fetchRepoMetadata } from "../lib/github";
 import { getQueue, QUEUES } from "../lib/queue";
 import { deleteNamespace } from "../lib/pinecone";
 
-const router = Router();
+const router: Router = Router();
 
 // All routes here require a valid JWT
 router.use(requireAuth);
@@ -185,7 +185,7 @@ router.post(
       await db.repositoryFile.deleteMany({ where: { repositoryId: id } });
 
       // Clear Pinecone namespace
-      await deleteNamespace(id);
+      await deleteNamespace(id as string);
 
       // Re-enqueue
       await getQueue(QUEUES.REPOSITORY_PROCESSING).add(
