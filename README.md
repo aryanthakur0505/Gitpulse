@@ -29,6 +29,19 @@ https://github.com/aryanthakur0505/Gitpulse/raw/main/docs/demo.webp
 
 ---
 
+## 🌐 Live Deployment
+
+| Service | Platform | URL |
+|---------|----------|-----|
+| 🖥️ **Frontend** | Vercel | [![Vercel](https://img.shields.io/badge/Vercel-Live-black?style=flat-square&logo=vercel)](https://gitpulse.vercel.app) |
+| ⚙️ **Backend API** | Render | [![Render](https://img.shields.io/badge/Render-Live-46E3B7?style=flat-square&logo=render)](https://gitpulse-api.onrender.com/api/health) |
+| 🗄️ **Database** | Neon PostgreSQL | Serverless, auto-scaling |
+| ⚡ **Queue / Cache** | Upstash Redis | Serverless Redis |
+| 🧠 **Vector DB** | Pinecone | 384-dim cosine index |
+
+> **Note:** The API is hosted on Render's free tier — the first request after inactivity may take ~30 seconds to wake up (cold start). Subsequent requests are fast.
+
+---
 
 ## ✨ Features
 
@@ -268,11 +281,11 @@ In your Pinecone dashboard, create an index with:
 pnpm dev
 ```
 
-| Service | URL |
-|---------|-----|
-| Web app | http://localhost:3000 |
-| API server | http://localhost:4000 |
-| API health | http://localhost:4000/api/health |
+| Service | Local Dev URL | Production URL |
+|---------|--------------|----------------|
+| Web app | http://localhost:3000 | https://gitpulse.vercel.app |
+| API server | http://localhost:4000 | https://gitpulse-api.onrender.com |
+| API health check | http://localhost:4000/api/health | https://gitpulse-api.onrender.com/api/health |
 
 ---
 
