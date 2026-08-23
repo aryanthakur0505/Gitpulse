@@ -181,10 +181,11 @@ Next.js (Web)  ──REST/SSE──▶  Express API (:4000)
 
 - **Node.js** ≥ 20
 - **pnpm** ≥ 9 — `npm install -g pnpm`
-- **Docker Desktop** — for PostgreSQL and Redis
-- **GitHub OAuth App** — for authentication
-- **Pinecone account** — free tier works ([pinecone.io](https://pinecone.io))
-- **Google AI Studio API key** — free ([aistudio.google.com](https://aistudio.google.com))
+- **GitHub OAuth App** — create one at [github.com/settings/developers](https://github.com/settings/developers)
+- **Neon account** — free PostgreSQL at [neon.tech](https://neon.tech)
+- **Upstash account** — free Redis at [upstash.com](https://upstash.com)
+- **Pinecone account** — free vector DB at [pinecone.io](https://pinecone.io)
+- **Google AI Studio API key** — free at [aistudio.google.com](https://aistudio.google.com)
 
 ### 1. Clone the repository
 
@@ -199,43 +200,30 @@ cd Gitpulse
 pnpm install
 ```
 
-### 3. Start infrastructure
-
-```bash
-pnpm docker:up
-```
-
-Starts **PostgreSQL** on port `5432` and **Redis** on port `6379`.
-
-### 4. Configure environment variables
-
-**Root `.env`**
-```env
-DATABASE_URL="postgresql://gitpulse:gitpulse@localhost:5432/gitpulse"
-```
+### 3. Configure environment variables
 
 **`apps/api/.env.local`**
 ```env
-# Database
-DATABASE_URL="postgresql://gitpulse:gitpulse@localhost:5432/gitpulse"
+# Database (Neon PostgreSQL — neon.tech)
+DATABASE_URL="postgresql://user:password@ep-xxx.neon.tech/neondb?sslmode=require"
 
-# Redis
-REDIS_URL="redis://localhost:6379"
+# Redis (Upstash — upstash.com)
+REDIS_URL="rediss://default:password@xxx.upstash.io:6379"
 
 # Auth
-JWT_SECRET="your-jwt-secret-here"
-API_INTERNAL_SECRET="your-internal-secret-here"
+JWT_SECRET="your-jwt-secret-min-32-chars"
+API_INTERNAL_SECRET="your-internal-secret-min-32-chars"
 
-# CORS
-ALLOWED_ORIGINS="http://localhost:3000"
+# CORS — set to your deployed frontend URL
+ALLOWED_ORIGINS="https://your-app.vercel.app"
 
-# GitHub API (optional but recommended — raises rate limit to 5000 req/hr)
+# GitHub API (optional — raises rate limit to 5000 req/hr)
 GITHUB_TOKEN="github_pat_xxxx"
 
-# Google Gemini
+# Google Gemini (aistudio.google.com)
 GEMINI_API_KEY="AIzaSy..."
 
-# Pinecone
+# Pinecone (app.pinecone.io)
 PINECONE_API_KEY="pcsk_..."
 PINECONE_INDEX="gitpulse"
 ```
@@ -243,49 +231,52 @@ PINECONE_INDEX="gitpulse"
 **`apps/web/.env.local`**
 ```env
 # NextAuth
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-nextauth-secret-here"
+NEXTAUTH_URL="https://your-app.vercel.app"
+NEXTAUTH_SECRET="your-nextauth-secret-min-32-chars"
 
 # GitHub OAuth App (github.com/settings/developers)
 GITHUB_ID="your-github-oauth-client-id"
 GITHUB_SECRET="your-github-oauth-client-secret"
 
-# API
-NEXT_PUBLIC_API_URL="http://localhost:4000/api"
-API_URL="http://localhost:4000/api"
-API_INTERNAL_SECRET="your-internal-secret-here"
+# API — point to your deployed Render backend
+NEXT_PUBLIC_API_URL="https://gitpulse-api.onrender.com/api"
+API_URL="https://gitpulse-api.onrender.com/api"
+API_INTERNAL_SECRET="your-internal-secret-min-32-chars"
 ```
 
 > **GitHub OAuth App setup:**
 > Go to **GitHub → Settings → Developer Settings → OAuth Apps → New OAuth App**
-> - Homepage URL: `http://localhost:3000`
-> - Callback URL: `http://localhost:3000/api/auth/callback/github`
+> - Homepage URL: `https://your-app.vercel.app`
+> - Callback URL: `https://your-app.vercel.app/api/auth/callback/github`
 
-### 5. Set up the database
+### 4. Set up the database
 
 ```bash
 pnpm db:generate
 pnpm db:push
 ```
 
-### 6. Create Pinecone index
+### 5. Create Pinecone index
 
 In your Pinecone dashboard, create an index with:
 - **Name:** `gitpulse`
 - **Dimensions:** `384`
 - **Metric:** `cosine`
 
-### 7. Start the development server
+### 6. Deploy
 
-```bash
-pnpm dev
-```
+| Service | Platform | How |
+|---------|----------|-----|
+| **Frontend** | [Vercel](https://vercel.com) | Connect GitHub repo → set env vars → deploy |
+| **Backend API** | [Render](https://render.com) | Detects `render.yaml` automatically → set env vars → deploy |
 
-| Service | Local Dev URL | Production URL |
-|---------|--------------|----------------|
-| Web app | http://localhost:3000 | https://gitpulse.vercel.app |
-| API server | http://localhost:4000 | https://gitpulse-api.onrender.com |
-| API health check | http://localhost:4000/api/health | https://gitpulse-api.onrender.com/api/health |
+Production URLs after deployment:
+
+| Service | URL |
+|---------|-----|
+| Web app | https://gitpulse.vercel.app |
+| API server | https://gitpulse-api.onrender.com |
+| API health check | https://gitpulse-api.onrender.com/api/health |
 
 ---
 
