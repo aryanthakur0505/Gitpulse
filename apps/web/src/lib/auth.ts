@@ -44,8 +44,8 @@ export const authOptions: NextAuthOptions = {
 
         // Stash the API token and user id on the user object temporarily
         // (picked up in jwt callback below)
-        (user as Record<string, unknown>).__apiToken = res.data.token;
-        (user as Record<string, unknown>).__userId = res.data.user.id;
+        (user as unknown as Record<string, unknown>).__apiToken = res.data.token;
+        (user as unknown as Record<string, unknown>).__userId = res.data.user.id;
 
         return true;
       } catch (err) {
@@ -57,8 +57,8 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }) {
       // First sign-in: persist data from user object into the JWT
       if (user) {
-        token.userId = (user as Record<string, unknown>).__userId as string;
-        token.apiToken = (user as Record<string, unknown>).__apiToken as string;
+        token.userId = (user as unknown as Record<string, unknown>).__userId as string;
+        token.apiToken = (user as unknown as Record<string, unknown>).__apiToken as string;
         token.githubId = String(
           (account as Record<string, unknown> | null)?.providerAccountId ?? ""
         );
