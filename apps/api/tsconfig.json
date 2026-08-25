@@ -9,8 +9,7 @@
     "rootDir": "./src",
     "types": ["node"],
     "paths": {
-      "@/*": ["./src/*"],
-      "@gitpulse/db": ["../../packages/db/src/index.ts"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src/**/*"],
