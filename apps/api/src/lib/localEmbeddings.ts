@@ -1,4 +1,4 @@
-import { pipeline, type FeatureExtractionPipeline } from "@xenova/transformers";
+import type { FeatureExtractionPipeline } from "@xenova/transformers";
 import { logger } from "./logger";
 
 // ─── Singleton Pipeline ───────────────────────────────────────────────────────
@@ -11,6 +11,10 @@ const EMBEDDING_MODEL = "Xenova/all-MiniLM-L6-v2";
 export async function getEmbeddingPipeline() {
   if (!_pipeline) {
     logger.info(`[LocalEmbeddings] Loading model ${EMBEDDING_MODEL} (this may take a moment on first run)...`);
+    // Dynamic import is required because @xenova/transformers is ESM-only.
+    // Static imports get compiled to require() in CommonJS output, which Node
+    // cannot use for ESM packages. Dynamic import() works from CJS at runtime.
+    const { pipeline } = await import("@xenova/transformers");
     _pipeline = pipeline("feature-extraction", EMBEDDING_MODEL, {
       quantized: true,
     }) as Promise<FeatureExtractionPipeline>;
