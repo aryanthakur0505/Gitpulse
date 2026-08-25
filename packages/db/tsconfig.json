@@ -4,10 +4,11 @@
     "target": "ES2022",
     "module": "CommonJS",
     "moduleResolution": "Node",
+    "rootDir": "./src",
     "outDir": "./dist",
-    "composite": true,
     "declaration": true,
     "skipLibCheck": true,
+    "noEmitOnError": false,
     "types": ["node"]
   },
   "include": ["src/**/*"],
