@@ -43,5 +43,8 @@ export const internalApi = axios.create({
     "Content-Type": "application/json",
     "X-Internal-Secret": process.env.API_INTERNAL_SECRET ?? "",
   },
-  timeout: 10_000,
+  // Render's free tier spins the API down after ~15min idle and can take
+  // 30-40s+ to cold-boot on the next request — 10s was too short and made
+  // every sign-in after an idle period fail with ECONNABORTED.
+  timeout: 45_000,
 });
