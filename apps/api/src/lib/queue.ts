@@ -11,9 +11,16 @@ export const QUEUES = {
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];
 
 // ─── Redis Connection ─────────────────────────────────────────────────────────
+// Parse the full REDIS_URL so auth (username/password) and TLS (rediss://)
+// carry over — hosted Redis providers (Upstash, Render Redis, etc.) require
+// both, and dropping them causes every connection to be immediately reset.
+const parsedRedisUrl = new URL(env.REDIS_URL);
 const connection: ConnectionOptions = {
-  host: new URL(env.REDIS_URL).hostname,
-  port: parseInt(new URL(env.REDIS_URL).port || "6379", 10),
+  host: parsedRedisUrl.hostname,
+  port: parseInt(parsedRedisUrl.port || "6379", 10),
+  username: parsedRedisUrl.username || undefined,
+  password: parsedRedisUrl.password || undefined,
+  tls: parsedRedisUrl.protocol === "rediss:" ? {} : undefined,
   maxRetriesPerRequest: null,
 };
 
