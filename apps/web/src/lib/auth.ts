@@ -27,32 +27,39 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account, profile }) {
       if (account?.provider !== "github" || !profile) return false;
 
+      const syncPayload = {
+        githubId: String((profile as { id?: number }).id ?? ""),
+        name: user.name,
+        email: user.email,
+        avatarUrl: user.image,
+      };
+
+      type SyncResponse = { success: boolean; user: { id: string }; token: string };
+
+      // Retry once — Render free tier cold boot can exceed the first attempt's timeout
+      let res;
       try {
-        // Sync user to our database via the Express API
-        const res = await internalApi.post<{
-          success: boolean;
-          user: { id: string };
-          token: string;
-        }>("/auth/sync", {
-          githubId: String((profile as { id?: number }).id ?? ""),
-          name: user.name,
-          email: user.email,
-          avatarUrl: user.image,
-        });
-
-        if (!res.data.success) return false;
-
-        // Stash the API token and user id on the user object temporarily
-        // (picked up in jwt callback below)
-        (user as unknown as Record<string, unknown>).__apiToken = res.data.token;
-        (user as unknown as Record<string, unknown>).__userId = res.data.user.id;
-
-        return true;
-      } catch (err) {
-        console.error("[NextAuth] Failed to sync user with API:", err);
-        return false;
+        res = await internalApi.post<SyncResponse>("/auth/sync", syncPayload);
+      } catch (firstErr) {
+        console.warn("[NextAuth] First /auth/sync attempt failed, retrying once...", firstErr);
+        try {
+          res = await internalApi.post<SyncResponse>("/auth/sync", syncPayload);
+        } catch (err) {
+          console.error("[NextAuth] Failed to sync user with API after retry:", err);
+          return false;
+        }
       }
+
+      if (!res.data.success) return false;
+
+      // Stash the API token and user id on the user object temporarily
+      // (picked up in jwt callback below)
+      (user as unknown as Record<string, unknown>).__apiToken = res.data.token;
+      (user as unknown as Record<string, unknown>).__userId = res.data.user.id;
+
+      return true;
     },
+
 
     async jwt({ token, user, account }) {
       // First sign-in: persist data from user object into the JWT
