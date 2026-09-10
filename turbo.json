@@ -21,7 +21,26 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "NODE_ENV",
+        "DATABASE_URL",
+        "REDIS_URL",
+        "JWT_SECRET",
+        "NEXTAUTH_SECRET",
+        "NEXTAUTH_URL",
+        "GITHUB_CLIENT_ID",
+        "GITHUB_CLIENT_SECRET",
+        "API_URL",
+        "NEXT_PUBLIC_API_URL",
+        "API_INTERNAL_SECRET",
+        "GEMINI_API_KEY",
+        "PINECONE_API_KEY",
+        "PINECONE_INDEX",
+        "PINECONE_ENVIRONMENT",
+        "GITHUB_TOKEN",
+        "PORT"
+      ]
     },
     "lint": {
       "outputs": []
