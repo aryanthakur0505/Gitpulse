@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import {
   GitFork, Star, Trash2, ExternalLink, Loader2,
@@ -8,6 +9,7 @@ import {
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   useDeleteRepository,
   useReindexRepository,
@@ -46,6 +48,7 @@ export function RepositoryCard({ repository: initialRepo }: RepositoryCardProps)
 
   const { mutateAsync: deleteRepo, isPending: isDeleting } = useDeleteRepository();
   const { mutateAsync: reindexRepo, isPending: isReindexing } = useReindexRepository();
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const statusConfig = STATUS_CONFIG[repository.status];
   const langColor = LANGUAGE_COLORS[repository.language ?? ""] ?? LANGUAGE_COLORS.default;
@@ -54,14 +57,18 @@ export function RepositoryCard({ repository: initialRepo }: RepositoryCardProps)
   const isFailed = repository.status === "FAILED";
   const isInProgress = ["PENDING", "CLONING", "PROCESSING", "EMBEDDING"].includes(repository.status);
 
-  const handleDelete = async (e: React.MouseEvent) => {
+  const handleDeleteClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!confirm(`Delete "${repository.fullName}"? This cannot be undone.`)) return;
+    setConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
     try {
       await deleteRepo(repository.id);
       toast.success(`"${repository.fullName}" deleted`);
     } catch {
       toast.error("Failed to delete repository");
+      throw new Error("delete failed"); // keep the dialog open on failure
     }
   };
 
@@ -188,7 +195,7 @@ export function RepositoryCard({ repository: initialRepo }: RepositoryCardProps)
               variant="ghost"
               size="icon"
               className="h-7 w-7 text-muted-foreground hover:bg-red-500/10 hover:text-red-400"
-              onClick={handleDelete}
+              onClick={handleDeleteClick}
               disabled={isDeleting}
               aria-label="Delete repository"
             >
@@ -201,6 +208,15 @@ export function RepositoryCard({ repository: initialRepo }: RepositoryCardProps)
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={`Delete "${repository.fullName}"?`}
+        description="This will permanently remove the repository, its indexed code, and all associated conversations. This cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 }

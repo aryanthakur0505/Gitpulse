@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { MessageSquare, Trash2, GitBranch, Clock, Hash } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useAllConversations, useDeleteConversation } from "@/hooks/useConversations";
 import { cn } from "@/lib/utils";
 
@@ -17,15 +19,16 @@ const LANG_COLORS: Record<string, string> = {
 export default function ConversationsPage() {
   const { data: conversations, isLoading } = useAllConversations();
   const { mutateAsync: deleteConv } = useDeleteConversation();
+  const [pendingDelete, setPendingDelete] = useState<{ convId: string; repoId: string } | null>(null);
 
-  const handleDelete = async (e: React.MouseEvent, convId: string, repoId: string) => {
-    e.preventDefault();
-    if (!confirm("Delete this conversation?")) return;
+  const handleDeleteConfirm = async () => {
+    if (!pendingDelete) return;
     try {
-      await deleteConv({ id: convId, repositoryId: repoId });
+      await deleteConv({ id: pendingDelete.convId, repositoryId: pendingDelete.repoId });
       toast.success("Conversation deleted");
     } catch {
       toast.error("Failed to delete conversation");
+      throw new Error("delete failed"); // keep the dialog open on failure
     }
   };
 
@@ -128,7 +131,10 @@ export default function ConversationsPage() {
                       </Link>
                       <button
                         id={`delete-conv-${conv.id}`}
-                        onClick={(e) => handleDelete(e, conv.id, conv.repositoryId)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setPendingDelete({ convId: conv.id, repoId: conv.repositoryId });
+                        }}
                         className="shrink-0 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all group-hover:opacity-100 hover:bg-red-500/10 hover:text-red-400"
                         aria-label="Delete conversation"
                       >
@@ -142,6 +148,15 @@ export default function ConversationsPage() {
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+        title="Delete this conversation?"
+        description="This will permanently delete the conversation and all its messages. This cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 }

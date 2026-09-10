@@ -6,8 +6,10 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { formatDistanceToNow } from "date-fns";
 import {
   ArrowLeft, Send, Loader2, Bot, User, FileCode2, ChevronDown, ChevronUp,
+  Copy, Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -58,6 +60,42 @@ function SourceCitation({ source, index }: { source: RagSource; index: number })
   );
 }
 
+// ─── Copy Button ──────────────────────────────────────────────────────────────
+
+function CopyMessageButton({ content }: { content: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard API unavailable (e.g. insecure context) — fail silently.
+    }
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] text-muted-foreground/60 transition-colors hover:bg-muted/40 hover:text-foreground"
+      aria-label="Copy message"
+    >
+      {copied ? (
+        <>
+          <Check className="h-3 w-3 text-green-400" />
+          Copied
+        </>
+      ) : (
+        <>
+          <Copy className="h-3 w-3" />
+          Copy
+        </>
+      )}
+    </button>
+  );
+}
+
 // ─── Message Bubble Component ─────────────────────────────────────────────────
 
 function MessageBubble({
@@ -71,8 +109,10 @@ function MessageBubble({
   const sources = (message.metadata?.sources as RagSource[] | undefined) ??
     message.streamingSources;
 
+  const hasContent = message.content.trim().length > 0;
+
   return (
-    <div className={cn("flex gap-3", isUser && "flex-row-reverse")}>
+    <div className={cn("group flex gap-3", isUser && "flex-row-reverse")}>
       {/* Avatar */}
       <div
         className={cn(
@@ -144,6 +184,21 @@ function MessageBubble({
             {sources.map((s, i) => (
               <SourceCitation key={i} source={s} index={i} />
             ))}
+          </div>
+        )}
+
+        {/* Meta row: timestamp + copy — hover-revealed, hidden while streaming/empty */}
+        {hasContent && !isStreaming && (
+          <div
+            className={cn(
+              "flex items-center gap-2 px-1 opacity-0 transition-opacity group-hover:opacity-100",
+              isUser && "flex-row-reverse"
+            )}
+          >
+            <span className="text-[10px] text-muted-foreground/40">
+              {formatDistanceToNow(new Date(message.createdAt), { addSuffix: true })}
+            </span>
+            <CopyMessageButton content={message.content} />
           </div>
         )}
       </div>
