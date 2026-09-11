@@ -51,16 +51,16 @@ function StatCard({
   loading?: boolean;
 }) {
   const accentMap = {
-    primary: "bg-primary/10 text-primary",
-    violet:  "bg-violet-600/10 text-violet-400",
-    green:   "bg-green-500/10 text-green-400",
-    orange:  "bg-orange-500/10 text-orange-400",
+    primary: "from-primary/25 to-primary/5 text-primary ring-primary/20",
+    violet:  "from-violet-500/25 to-violet-500/5 text-violet-400 ring-violet-500/20",
+    green:   "from-green-500/25 to-green-500/5 text-green-400 ring-green-500/20",
+    orange:  "from-orange-500/25 to-orange-500/5 text-orange-400 ring-orange-500/20",
   };
 
   return (
     <div className="glass rounded-xl p-5 transition-all duration-200 hover:glow">
       <div className="flex items-start justify-between">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             {label}
           </p>
@@ -73,7 +73,12 @@ function StatCard({
           )}
           <p className="mt-1 text-xs text-muted-foreground">{description}</p>
         </div>
-        <div className={cn("rounded-lg p-2.5", accentMap[accent])}>
+        <div
+          className={cn(
+            "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ring-1",
+            accentMap[accent]
+          )}
+        >
           <Icon className="h-5 w-5" />
         </div>
       </div>

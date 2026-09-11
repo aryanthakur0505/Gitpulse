@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, Settings, User } from "lucide-react";
+import { LogOut, Menu, Settings, User } from "lucide-react";
 import {
   Avatar,
   AvatarFallback,
@@ -19,15 +19,23 @@ import { getInitials } from "@/lib/utils";
 
 interface HeaderProps {
   title?: string;
+  onOpenMobileMenu: () => void;
 }
 
-export function Header({ title }: HeaderProps) {
+export function Header({ title, onOpenMobileMenu }: HeaderProps) {
   const { data: session } = useSession();
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-background/80 px-6 backdrop-blur-sm">
-      {/* Page title */}
-      <div>
+    <header className="flex h-16 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-sm sm:px-6">
+      {/* Mobile menu + page title */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onOpenMobileMenu}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground md:hidden"
+          aria-label="Open menu"
+        >
+          <Menu className="h-[18px] w-[18px]" />
+        </button>
         {title && (
           <h1 className="text-base font-semibold text-foreground">{title}</h1>
         )}
