@@ -17,6 +17,13 @@ import { useConversation, type RagSource, type Message } from "@/hooks/useConver
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 
+const SUGGESTED_PROMPTS = [
+  "How does authentication work?",
+  "Where are the API routes defined?",
+  "Explain the main data flow.",
+  "What's the overall architecture?",
+];
+
 // ─── Source Citation Component ────────────────────────────────────────────────
 
 function SourceCitation({ source, index }: { source: RagSource; index: number }) {
@@ -391,16 +398,35 @@ export default function ChatPage() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-600/20">
-              <Bot className="h-8 w-8 text-violet-400" />
+          <div className="flex h-full flex-col items-center justify-center gap-6 text-center px-4">
+            <div className="relative flex h-20 w-20 items-center justify-center">
+              <div className="absolute inset-0 animate-pulse-glow rounded-full bg-gradient-to-br from-violet-600/30 to-indigo-600/30 blur-xl" />
+              <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600/20 to-indigo-600/20 ring-1 ring-violet-500/20">
+                <Bot className="h-9 w-9 text-violet-400" />
+              </div>
             </div>
             <div>
-              <p className="font-semibold text-foreground">Ask anything about this codebase</p>
-              <p className="mt-1 text-sm text-muted-foreground max-w-sm">
-                Try: "How does authentication work?", "Where are API routes defined?", or
-                "Explain the main data flow."
+              <p className="text-xl font-semibold text-foreground">
+                Ask anything about this codebase
               </p>
+              <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                GitPulse has indexed{" "}
+                <span className="text-foreground">
+                  {conversation?.repository?.fullName ?? "this repository"}
+                </span>{" "}
+                — ask about its architecture, a specific file, or how something works.
+              </p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-2 max-w-lg">
+              {SUGGESTED_PROMPTS.map((prompt) => (
+                <button
+                  key={prompt}
+                  onClick={() => setInput(prompt)}
+                  className="rounded-full border border-border/60 bg-muted/20 px-3.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 hover:text-foreground"
+                >
+                  {prompt}
+                </button>
+              ))}
             </div>
           </div>
         )}
