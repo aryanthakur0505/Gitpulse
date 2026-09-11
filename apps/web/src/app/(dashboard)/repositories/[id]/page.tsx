@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -11,6 +12,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useRepository, useDeleteRepository, useReindexRepository } from "@/hooks/useRepositories";
 import { useConversations, useCreateConversation, useDeleteConversation } from "@/hooks/useConversations";
 import { cn } from "@/lib/utils";
@@ -47,6 +49,9 @@ export default function RepositoryDetailPage() {
   const { mutateAsync: deleteRepo, isPending: isDeleting } = useDeleteRepository();
   const { mutateAsync: reindexRepo, isPending: isReindexing } = useReindexRepository();
 
+  const [repoDeleteOpen, setRepoDeleteOpen] = useState(false);
+  const [pendingDeleteConvId, setPendingDeleteConvId] = useState<string | null>(null);
+
   const handleNewChat = async () => {
     if (!repo) return;
     try {
@@ -57,25 +62,26 @@ export default function RepositoryDetailPage() {
     }
   };
 
-  const handleDeleteConv = async (convId: string) => {
-    if (!confirm("Delete this conversation?")) return;
+  const handleDeleteConvConfirm = async () => {
+    if (!pendingDeleteConvId) return;
     try {
-      await deleteConv({ id: convId, repositoryId: id });
+      await deleteConv({ id: pendingDeleteConvId, repositoryId: id });
       toast.success("Conversation deleted");
     } catch {
       toast.error("Failed to delete conversation");
+      throw new Error("delete failed"); // keep the dialog open on failure
     }
   };
 
-  const handleDeleteRepo = async () => {
+  const handleDeleteRepoConfirm = async () => {
     if (!repo) return;
-    if (!confirm(`Delete "${repo.fullName}"? This cannot be undone.`)) return;
     try {
       await deleteRepo(repo.id);
       toast.success(`"${repo.fullName}" deleted`);
       router.push("/dashboard");
     } catch {
       toast.error("Failed to delete repository");
+      throw new Error("delete failed"); // keep the dialog open on failure
     }
   };
 
@@ -203,7 +209,7 @@ export default function RepositoryDetailPage() {
                 variant="ghost"
                 size="sm"
                 className="h-7 gap-1.5 px-2.5 text-xs text-muted-foreground hover:bg-red-500/10 hover:text-red-400"
-                onClick={handleDeleteRepo}
+                onClick={() => setRepoDeleteOpen(true)}
                 disabled={isDeleting}
               >
                 {isDeleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
@@ -270,7 +276,7 @@ export default function RepositoryDetailPage() {
                 </Link>
                 <button
                   id={`delete-conv-${conv.id}`}
-                  onClick={() => handleDeleteConv(conv.id)}
+                  onClick={() => setPendingDeleteConvId(conv.id)}
                   className="shrink-0 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all group-hover:opacity-100 hover:bg-red-500/10 hover:text-red-400"
                   aria-label="Delete conversation"
                 >
@@ -305,6 +311,24 @@ export default function RepositoryDetailPage() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={repoDeleteOpen}
+        onOpenChange={setRepoDeleteOpen}
+        title={`Delete "${repo.fullName}"?`}
+        description="This will permanently remove the repository, its indexed code, and all associated conversations. This cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={handleDeleteRepoConfirm}
+      />
+
+      <ConfirmDialog
+        open={pendingDeleteConvId !== null}
+        onOpenChange={(open) => !open && setPendingDeleteConvId(null)}
+        title="Delete this conversation?"
+        description="This will permanently delete the conversation and all its messages. This cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={handleDeleteConvConfirm}
+      />
     </div>
   );
 }
